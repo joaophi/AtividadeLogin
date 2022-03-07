@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "AtividadeLogin"
+rootProject.name = "Atividade"
 include(":app")

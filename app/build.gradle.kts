@@ -8,7 +8,7 @@ android {
     compileSdk = 31
 
     defaultConfig {
-        applicationId = "com.github.joaophi.atividade_login"
+        applicationId = "com.github.joaophi.atividade"
         minSdk = 21
         targetSdk = 31
         versionCode = 1

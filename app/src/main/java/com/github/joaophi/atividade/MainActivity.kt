@@ -1,4 +1,4 @@
-package com.github.joaophi.atividade_login
+package com.github.joaophi.atividade
 
 import android.os.Bundle
 import androidx.activity.viewModels
@@ -9,7 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.github.joaophi.atividade_login.databinding.ActivityLoginBinding
+import com.github.joaophi.atividade.databinding.ActivityMainBinding
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
@@ -25,12 +25,12 @@ fun TextInputEditText.bind(lifecycle: Lifecycle, stateFlow: MutableStateFlow<Str
     doAfterTextChanged { stateFlow.value = it.toString() }
 }
 
-class LoginActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val viewModel: LoginViewModel by viewModels()
-        val binding = ActivityLoginBinding.inflate(layoutInflater)
+        val viewModel: MainViewModel by viewModels()
+        val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.edtUser.bind(lifecycle, viewModel.username)

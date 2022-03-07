@@ -1,4 +1,4 @@
-package com.github.joaophi.atividade_login
+package com.github.joaophi.atividade
 
 import android.os.Parcelable
 import androidx.lifecycle.SavedStateHandle
@@ -40,7 +40,7 @@ sealed class LoginState : Parcelable {
     data class LoggedIn(val user: User) : LoginState()
 }
 
-class LoginViewModel(handle: SavedStateHandle) : ViewModel() {
+class MainViewModel(handle: SavedStateHandle) : ViewModel() {
     val username by handle.getStateFlow(initialValue = "")
     val password by handle.getStateFlow(initialValue = "")
 

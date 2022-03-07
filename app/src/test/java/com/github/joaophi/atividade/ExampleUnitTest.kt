@@ -1,4 +1,4 @@
-package com.github.joaophi.atividade_login
+package com.github.joaophi.atividade
 
 import org.junit.Test
 
