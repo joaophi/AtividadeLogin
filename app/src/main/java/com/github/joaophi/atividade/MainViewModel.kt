@@ -1,74 +1,49 @@
 package com.github.joaophi.atividade
 
-import android.os.Parcelable
+import androidx.annotation.IdRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.parcelize.Parcelize
+import java.time.LocalDate
 
-@Parcelize
-data class User(
-    val login: String,
-    val password: String,
-    val name: String,
-    val hint: String,
-) : Parcelable
-
-private val USERS = listOf(
-    User(login = "fabricinho", password = "@moAcl@u", name = "Fabricio", hint = "Paixão"),
-    User(login = "pretinho", password = "black", name = "", hint = "Inglês"),
-    User(login = "jeanzinho", password = "tut0r1@lDEy0utub3", name = "Jean", hint = "Youtuber"),
-)
-
-sealed class LoginState : Parcelable {
-    @Parcelize
-    object LoggedOff : LoginState()
-
-    @Parcelize
-    object LoggingIn : LoginState()
-
-    @Parcelize
-    object UserNotFound : LoginState()
-
-    @Parcelize
-    data class WrongPassword(val hint: String) : LoginState()
-
-    @Parcelize
-    data class LoggedIn(val user: User) : LoginState()
-}
 
 class MainViewModel(handle: SavedStateHandle) : ViewModel() {
-    val username by handle.getStateFlow(initialValue = "")
-    val password by handle.getStateFlow(initialValue = "")
+    val nome by handle.getStateFlow(initialValue = "")
 
-    private val _login = MutableStateFlow<LoginState>(LoginState.LoggedOff)
-    val login = _login.asSharedFlow()
-
-    fun login() {
-        viewModelScope.launch {
-            _login.emit(LoginState.LoggingIn)
-
-            val login = username.value
-            val pass = password.value
-
-            val user = USERS.find { it.login == login }
-
-            password.value = ""
-            val state = when {
-                user == null -> LoginState.UserNotFound
-                user.password != pass -> LoginState.WrongPassword(user.hint)
-                else -> LoginState.LoggedIn(user)
-            }
-            _login.emit(state)
-        }
+    enum class Sexo(@IdRes val id: Int = -1) {
+        MASCULINO(R.id.rbMasculino), FEMININO(R.id.rbFeminino), NAO_SELECIONADO;
     }
 
-    fun logoff() {
+    val sexo by handle.getStateFlow(initialValue = Sexo.NAO_SELECIONADO)
+
+    val nascimento by handle.getStateFlow(initialValue = LocalDate.now())
+
+    data class Pessoa(val nome: String, val sexo: Sexo, val nascimento: LocalDate)
+
+    val erros = MutableSharedFlow<Throwable>(extraBufferCapacity = 10)
+    val corretos = MutableSharedFlow<Pessoa>(extraBufferCapacity = 10)
+    fun salvar() {
         viewModelScope.launch {
-            _login.emit(LoginState.LoggedOff)
+            try {
+                val nome = nome.value
+                if (nome.isBlank())
+                    throw Exception("Nome vazio")
+
+                val sexo = sexo.value
+                if (sexo == Sexo.NAO_SELECIONADO)
+                    throw Exception("Sexo não selecionado")
+
+                val nascimento = nascimento.value
+                if (nascimento > LocalDate.now())
+                    throw Exception("Nascimento maior que data atual")
+
+                val pessoa = Pessoa(nome, sexo, nascimento)
+                corretos.emit(pessoa)
+            } catch (ex: Throwable) {
+                erros.emit(ex)
+            }
         }
     }
 }
