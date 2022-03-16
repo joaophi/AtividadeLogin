@@ -1,55 +1,15 @@
 package com.github.joaophi.atividade
 
 import android.os.Bundle
-import android.widget.DatePicker
-import android.widget.EditText
-import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.widget.doAfterTextChanged
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DividerItemDecoration
 import com.github.joaophi.atividade.databinding.ActivityMainBinding
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import java.time.LocalDate
-
-fun EditText.bind(lifecycle: Lifecycle, stateFlow: MutableStateFlow<String>) {
-    stateFlow
-        .filter { it != text?.toString() }
-        .onEach(::setText)
-        .flowWithLifecycle(lifecycle)
-        .launchIn(lifecycle.coroutineScope)
-    doAfterTextChanged { stateFlow.value = it.toString() }
-}
-
-fun RadioGroup.bindSexo(lifecycle: Lifecycle, stateFlow: MutableStateFlow<MainViewModel.Sexo>) {
-    val map = MainViewModel.Sexo.values()
-        .associateBy(MainViewModel.Sexo::id)
-        .withDefault { MainViewModel.Sexo.NAO_SELECIONADO }
-    stateFlow
-        .filter { it.id != checkedRadioButtonId }
-        .onEach { check(it.id) }
-        .flowWithLifecycle(lifecycle)
-        .launchIn(lifecycle.coroutineScope)
-    setOnCheckedChangeListener { _, checkedId -> stateFlow.value = map.getValue(checkedId) }
-}
-
-fun DatePicker.bind(lifecycle: Lifecycle, stateFlow: MutableStateFlow<LocalDate>) {
-    val date = stateFlow.value
-    init(date.year, date.monthValue.dec(), date.dayOfMonth) { _, year, month, day ->
-        stateFlow.value = LocalDate.of(year, month.inc(), day)
-    }
-    stateFlow
-        .filter { it != LocalDate.of(year, month.inc(), dayOfMonth) }
-        .onEach { updateDate(it.year, it.monthValue.dec(), it.dayOfMonth) }
-        .flowWithLifecycle(lifecycle)
-        .launchIn(lifecycle.coroutineScope)
-}
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,19 +19,47 @@ class MainActivity : AppCompatActivity() {
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.edtNome.bind(lifecycle, viewModel.nome)
-        binding.rgSexo.bindSexo(lifecycle, viewModel.sexo)
-        binding.dpNascimento.bind(lifecycle, viewModel.nascimento)
-        binding.btnSalvar.setOnClickListener { viewModel.salvar() }
+        binding.btnLimpar.setOnClickListener {
+            binding.edtID.text = null
+            binding.edtDescricao.text = null
+            binding.edtQuantidade.text = null
+        }
 
-        viewModel.erros
-            .onEach { Toast.makeText(this, "Erro: ${it.message}", Toast.LENGTH_LONG).show() }
-            .flowWithLifecycle(lifecycle)
-            .launchIn(lifecycle.coroutineScope)
+        binding.btnSalvar.setOnClickListener {
+            val id = binding.edtID.text?.toString()?.toIntOrNull()
+            val descricao = binding.edtDescricao.text?.toString()
+            val quantidade = binding.edtQuantidade.text?.toString()?.toIntOrNull()
 
-        viewModel.corretos
-            .onEach { Toast.makeText(this, "Pessoa: $it", Toast.LENGTH_LONG).show() }
+            if (descricao.isNullOrBlank()) {
+                Toast.makeText(this, "Descrição inválida", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            if (quantidade == null || quantidade <= 0) {
+                Toast.makeText(this, "Quantidade inválida", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            viewModel.salvar(id, descricao, quantidade)
+            binding.btnLimpar.callOnClick()
+        }
+
+        val adapter = ItemAdapter(
+            onClick = {
+                binding.edtID.setText("${it.id}")
+                binding.edtDescricao.setText(it.descricao)
+                binding.edtQuantidade.setText("${it.quantidade}")
+            },
+            onDelete = { viewModel.excluir(it.id) },
+        )
+        binding.rvItens.adapter = adapter
+        binding.rvItens.addItemDecoration(
+            DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
+        )
+
+        viewModel.items
+            .onEach(adapter::submitList)
             .flowWithLifecycle(lifecycle)
-            .launchIn(lifecycle.coroutineScope)
+            .launchIn(lifecycleScope)
     }
 }

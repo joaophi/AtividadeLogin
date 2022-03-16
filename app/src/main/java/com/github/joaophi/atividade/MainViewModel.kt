@@ -1,49 +1,62 @@
 package com.github.joaophi.atividade
 
-import androidx.annotation.IdRes
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
+class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private val banco = MeuSQLite(application, name = "aplicacaodb").writableDatabase
 
-class MainViewModel(handle: SavedStateHandle) : ViewModel() {
-    val nome by handle.getStateFlow(initialValue = "")
+    private val _updateItem = MutableSharedFlow<Unit>()
+    val items = _updateItem
+        .onStart { emit(Unit) }
+        .map {
+            val columns = arrayOf("id", "descricao", "quantidade")
+            val cursor = banco.query("item", columns, null, null, null, null, null)
 
-    enum class Sexo(@IdRes val id: Int = -1) {
-        MASCULINO(R.id.rbMasculino), FEMININO(R.id.rbFeminino), NAO_SELECIONADO;
+            buildList {
+                while (cursor.moveToNext()) {
+                    val item = Item(
+                        id = cursor.getInt(0),
+                        descricao = cursor.getString(1),
+                        quantidade = cursor.getInt(2),
+                    )
+                    add(item)
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = emptyList())
+
+    init {
+        _updateItem.tryEmit(Unit)
     }
 
-    val sexo by handle.getStateFlow(initialValue = Sexo.NAO_SELECIONADO)
+    fun excluir(id: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            banco.execSQL(
+                """
+                    DELETE FROM item
+                    WHERE id = ?
+                """.trimIndent(),
+                arrayOf(id),
+            )
+            _updateItem.emit(Unit)
+        }
+    }
 
-    val nascimento by handle.getStateFlow(initialValue = LocalDate.now())
-
-    data class Pessoa(val nome: String, val sexo: Sexo, val nascimento: LocalDate)
-
-    val erros = MutableSharedFlow<Throwable>(extraBufferCapacity = 10)
-    val corretos = MutableSharedFlow<Pessoa>(extraBufferCapacity = 10)
-    fun salvar() {
-        viewModelScope.launch {
-            try {
-                val nome = nome.value
-                if (nome.isBlank())
-                    throw Exception("Nome vazio")
-
-                val sexo = sexo.value
-                if (sexo == Sexo.NAO_SELECIONADO)
-                    throw Exception("Sexo não selecionado")
-
-                val nascimento = nascimento.value
-                if (nascimento > LocalDate.now())
-                    throw Exception("Nascimento maior que data atual")
-
-                val pessoa = Pessoa(nome, sexo, nascimento)
-                corretos.emit(pessoa)
-            } catch (ex: Throwable) {
-                erros.emit(ex)
-            }
+    fun salvar(id: Int?, descricao: String, quantidade: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            banco.execSQL(
+                """
+                    INSERT OR REPLACE INTO item (id, descricao, quantidade)
+                    VALUES (?, ?, ?)
+                """.trimIndent(),
+                arrayOf(id, descricao, quantidade),
+            )
+            _updateItem.emit(Unit)
         }
     }
 }
