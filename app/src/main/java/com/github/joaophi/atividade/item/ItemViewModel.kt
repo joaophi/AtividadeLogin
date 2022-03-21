@@ -1,13 +1,21 @@
-package com.github.joaophi.atividade
+package com.github.joaophi.atividade.item
 
 import android.app.Application
+import androidx.core.app.NotificationChannelCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.DEFAULT_SOUND
+import androidx.core.app.NotificationCompat.DEFAULT_VIBRATE
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.joaophi.atividade.MeuSQLite
+import com.github.joaophi.atividade.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class ItemViewModel(application: Application) : AndroidViewModel(application) {
+    private val notificationManager = NotificationManagerCompat.from(application)
     private val banco = MeuSQLite(application, name = "aplicacaodb").writableDatabase
 
     private val _updateItem = MutableSharedFlow<Unit>()
@@ -49,6 +57,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun salvar(id: Int?, descricao: String, quantidade: Int) {
         viewModelScope.launch(Dispatchers.IO) {
+            val qtd = items.value.count() + 1
+
             banco.execSQL(
                 """
                     INSERT OR REPLACE INTO item (id, descricao, quantidade)
@@ -57,6 +67,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 arrayOf(id, descricao, quantidade),
             )
             _updateItem.emit(Unit)
+
+            if (qtd % 10 == 0) {
+                val channelId = "APP"
+
+                val channel = NotificationChannelCompat
+                    .Builder(channelId, NotificationManagerCompat.IMPORTANCE_MAX)
+                    .build()
+                notificationManager.createNotificationChannel(channel)
+
+                val notification = NotificationCompat.Builder(getApplication(), channelId)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle("Item $qtd adicionado")
+                    .setDefaults(DEFAULT_SOUND or DEFAULT_VIBRATE)
+                    .setContentText("$qtd é multiplo de 10")
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .build()
+
+                notificationManager.notify(qtd, notification)
+            }
         }
     }
 }

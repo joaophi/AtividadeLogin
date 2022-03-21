@@ -1,4 +1,4 @@
-package com.github.joaophi.atividade
+package com.github.joaophi.atividade.item
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
