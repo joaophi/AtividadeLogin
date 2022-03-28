@@ -9,16 +9,6 @@
         android:id="@+id/homeFragment"
         android:name="com.github.joaophi.atividade.HomeFragment"
         android:label="Menu"
-        tools:layout="@layout/fragment_home">
-        <action
-            android:id="@+id/action_homeFragment_to_itemFragment"
-            app:destination="@id/itemFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/itemFragment"
-        android:name="com.github.joaophi.atividade.item.ItemFragment"
-        android:label="Cadastro de item"
-        tools:layout="@layout/fragment_item" />
+        tools:layout="@layout/fragment_home" />
 
 </navigation>
