@@ -9,6 +9,23 @@
         android:id="@+id/homeFragment"
         android:name="com.github.joaophi.atividade.HomeFragment"
         android:label="Menu"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_homeFragment_to_cnpjFragment"
+            app:destination="@id/cnpjFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_cpfFragment"
+            app:destination="@id/cpfFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/cpfFragment"
+        android:name="com.github.joaophi.atividade.cpf.CpfFragment"
+        android:label="CPF"
+        tools:layout="@layout/cpf_fragment" />
+    <fragment
+        android:id="@+id/cnpjFragment"
+        android:name="com.github.joaophi.atividade.cnpj.CnpjFragment"
+        android:label="CNPJ"
+        tools:layout="@layout/cnpj_fragment" />
 
 </navigation>

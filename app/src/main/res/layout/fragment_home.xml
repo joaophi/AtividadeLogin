@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/map"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="4dp"
     tools:context=".HomeFragment">
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCPF"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:text="CPF" />
 
-</androidx.fragment.app.FragmentContainerView>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCNPJ"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:text="CNPJ" />
+
+</androidx.appcompat.widget.LinearLayoutCompat>
